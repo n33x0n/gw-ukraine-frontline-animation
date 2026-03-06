@@ -1,0 +1,249 @@
+body,
+html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Montserrat', sans-serif;
+    background: #141414;
+    color: white;
+    overflow: hidden;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    background: #141414;
+}
+
+.leaflet-container {
+    background: #141414;
+}
+
+.leaflet-pane.leaflet-countries-pane {
+    z-index: 200;
+}
+
+.leaflet-pane.leaflet-polygons-pane {
+    z-index: 400;
+}
+
+.leaflet-pane.leaflet-labels-pane {
+    z-index: 600;
+    pointer-events: none;
+}
+
+/* Toolbar / Controls */
+#controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    background: rgba(20, 20, 20, 0.9);
+    padding: 12px 24px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid #333;
+}
+
+button {
+    background: #dc1a21;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background 0.2s;
+    font-family: 'Montserrat', sans-serif;
+}
+
+button:hover {
+    background: #ff5555;
+}
+
+button:disabled {
+    background: #555;
+    cursor: not-allowed;
+}
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Progress Bar */
+#progress-container {
+    width: 250px;
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    position: relative;
+    cursor: pointer;
+}
+
+#progress-bar {
+    height: 100%;
+    background: #dc1a21;
+    width: 0%;
+    border-radius: 3px;
+    transition: width 0.25s linear;
+}
+
+/* Date Label */
+#date-label {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-size: 26px;
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    pointer-events: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+#date-label.visible {
+    opacity: 1;
+}
+
+/* Loading Overlay */
+#loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #141414;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #333;
+    border-top: 4px solid #dc1a21;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+#error-msg {
+    color: #dc1a21;
+    display: none;
+    margin-top: 10px;
+    text-align: center;
+    padding: 0 20px;
+}
+
+/* Inset Map */
+#inset-map {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 200px;
+    height: 150px;
+    z-index: 1000;
+    border: 2px solid #333;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    background: #141414;
+}
+
+.polskie-napisy {
+    filter: invert(100%) brightness(1.2) opacity(0.5);
+    pointer-events: none !important;
+}
+
+/* Responsywność dla urządzeń mobilnych */
+@media (max-width: 768px) {
+    #controls {
+        padding: 6px 12px;
+        gap: 8px;
+        bottom: 25px;
+        /* Wyżej by ominąć creditsy z prawej jeśli pasek jest długi, chociaż jest scentrowany. Zostawiamy zapas */
+    }
+
+    button {
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+
+    #btn-reset {
+        padding: 4px 6px !important;
+    }
+
+    #btn-reset svg {
+        width: 12px !important;
+        height: 12px !important;
+    }
+
+    #progress-container {
+        width: 125px;
+        height: 4px;
+    }
+
+    #inset-map {
+        width: 100px;
+        height: 75px;
+        top: 10px;
+        /* W lewym górnym rogu */
+        left: 10px;
+        bottom: auto;
+        right: auto;
+        transform: none;
+        /* Reset centrowania */
+    }
+
+    #date-label {
+        font-size: 18px;
+        padding: 6px 12px;
+    }
+
+    .leaflet-control-attribution {
+        width: 100% !important;
+        box-sizing: border-box;
+        text-align: center !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        margin: 0 !important;
+        display: block !important;
+        float: none !important;
+        padding: 4px 10px !important;
+    }
+
+    .leaflet-bottom.leaflet-right {
+        width: 100% !important;
+        margin: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+    }
+}
