@@ -418,5 +418,15 @@
     "name": "deepstatemap_data_20260223.geojson",
     "dateStr": "2026-02-23",
     "url": "./geojson/deepstatemap_data_20260223.geojson"
+  },
+  {
+    "name": "deepstatemap_data_20260302.geojson",
+    "dateStr": "2026-03-02",
+    "url": "./geojson/deepstatemap_data_20260302.geojson"
+  },
+  {
+    "name": "deepstatemap_data_20260306.geojson",
+    "dateStr": "2026-03-06",
+    "url": "./geojson/deepstatemap_data_20260306.geojson"
   }
 ]
