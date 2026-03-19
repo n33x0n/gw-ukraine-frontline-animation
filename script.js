@@ -146,7 +146,7 @@ function initMap() {
 
 async function fetchFrameList() {
     try {
-        const res = await fetch('./geojson/frames.json');
+        const res = await fetch(`./geojson/frames.json?t=${Date.now()}`);
         if (!res.ok) {
             throw new Error(`Błąd: ${res.status} ${res.statusText}`);
         }
