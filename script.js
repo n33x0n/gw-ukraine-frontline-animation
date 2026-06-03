@@ -24,6 +24,45 @@ const elLoading = document.getElementById('loading');
 const elLoadingText = document.getElementById('loading-text');
 const elErrorMsg = document.getElementById('error-msg');
 const elSpinner = document.getElementById('spinner');
+const elSearchPanel = document.getElementById('search-panel');
+const elSearchInput = document.getElementById('search-input');
+const elSearchResults = document.getElementById('search-results');
+const elBtnCopyEmbed = document.getElementById('btn-copy-embed');
+const elCopyStatus = document.getElementById('copy-status');
+
+// ---- Tryb edycji + stan URL (deep-link / embed) -------------------------
+
+const urlParams = new URLSearchParams(window.location.search);
+const EDIT_MODE = urlParams.get('edit') === '1';
+const TOWN_ZOOM = 11; // domyślne przybliżenie po wyborze miejscowości
+
+// Czyta lat/lng/zoom z URL. Zwraca {center:[lat,lng], zoom} albo null.
+function parseLocationFromUrl() {
+    const lat = parseFloat(urlParams.get('lat'));
+    const lng = parseFloat(urlParams.get('lng'));
+    const zoom = parseFloat(urlParams.get('zoom'));
+    if (![lat, lng, zoom].every(Number.isFinite)) return null;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+    if (zoom < 0 || zoom > 20) return null;
+    return { center: [lat, lng], zoom };
+}
+
+// Zoom bywa ułamkowy (domyślne 5.5 / 6.5). Całkowite zapisujemy bez kropki.
+function formatZoom(z) {
+    return Number.isInteger(z) ? String(z) : z.toFixed(1);
+}
+
+// Zapisuje bieżący widok do paska adresu (tylko w trybie edycji).
+function writeLocationToUrl() {
+    if (!EDIT_MODE) return; // czyste embedy nie nadpisują swojego URL
+    const c = map.getCenter();
+    const p = new URLSearchParams(window.location.search);
+    p.set('edit', '1');
+    p.set('lat', c.lat.toFixed(5));
+    p.set('lng', c.lng.toFixed(5));
+    p.set('zoom', formatZoom(map.getZoom()));
+    history.replaceState(null, '', `${window.location.pathname}?${p.toString()}`);
+}
 
 async function init() {
     initMap();
@@ -41,9 +80,16 @@ async function init() {
 
 function initMap() {
     const isMobile = window.innerWidth < 768;
-    const initialZoom = isMobile ? 5.5 : 6.5;
+    let initialZoom = isMobile ? 5.5 : 6.5;
     // Aby przesunąć mapę "w lewo" na ekranie, musimy przesunąć "środek kamery" w prawo (na wschód)
-    const initialCenter = isMobile ? [47.84, 35.90] : [47.84, 35.14];
+    let initialCenter = isMobile ? [47.84, 35.90] : [47.84, 35.14];
+
+    // Deep-link: jeśli URL ma prawidłowe lat/lng/zoom, nadpisz domyślny widok.
+    const urlLoc = parseLocationFromUrl();
+    if (urlLoc) {
+        initialCenter = urlLoc.center;
+        initialZoom = urlLoc.zoom;
+    }
 
     map = L.map('map', {
         center: initialCenter,
@@ -121,6 +167,14 @@ function initMap() {
     map.on('zoom', updateInsetMap);
     map.whenReady(updateInsetMap);
 
+    if (EDIT_MODE) {
+        // moveend/zoomend (nie move/zoom), by nie zalewać history.replaceState
+        map.on('moveend', writeLocationToUrl);
+        map.on('zoomend', writeLocationToUrl);
+        map.whenReady(writeLocationToUrl); // zapisz widok startowy
+        initSearchUi();
+    }
+
     // Progress Bar Click Event
     const elProgressContainer = document.getElementById('progress-container');
     elProgressContainer.addEventListener('click', (e) => {
@@ -142,6 +196,123 @@ function initMap() {
     elPlay.addEventListener('click', startPlayback);
     elPause.addEventListener('click', pausePlayback);
     elReset.addEventListener('click', resetPlayback);
+}
+
+// ---- Wyszukiwarka Nominatim + generator embed (tylko tryb edycji) -------
+
+let searchDebounce = null;
+let lastQueryTime = 0;
+let copyStatusTimeout = null;
+
+function initSearchUi() {
+    elSearchPanel.hidden = false;
+    elSearchPanel.classList.add('edit-visible');
+
+    elSearchInput.addEventListener('input', () => {
+        const q = elSearchInput.value.trim();
+        clearTimeout(searchDebounce);
+        if (q.length < 3) {
+            elSearchResults.innerHTML = '';
+            return;
+        }
+        searchDebounce = setTimeout(() => runSearch(q), 400);
+    });
+
+    // Zamknij listę po kliknięciu poza panelem.
+    document.addEventListener('click', (e) => {
+        if (!elSearchPanel.contains(e.target)) {
+            elSearchResults.innerHTML = '';
+        }
+    });
+
+    elBtnCopyEmbed.addEventListener('click', copyEmbedCode);
+}
+
+function setResultsState(text) {
+    elSearchResults.innerHTML = '';
+    const li = document.createElement('li');
+    li.className = 'state';
+    li.textContent = text;
+    elSearchResults.appendChild(li);
+}
+
+async function runSearch(q) {
+    // Polityka Nominatim: maks. ~1 zapytanie/s.
+    const now = Date.now();
+    if (now - lastQueryTime < 1000) {
+        clearTimeout(searchDebounce);
+        searchDebounce = setTimeout(() => runSearch(q), 1000 - (now - lastQueryTime));
+        return;
+    }
+    lastQueryTime = now;
+
+    setResultsState('Szukam…');
+    const url = 'https://nominatim.openstreetmap.org/search'
+        + '?format=jsonv2&countrycodes=ua&accept-language=pl&limit=5'
+        + '&q=' + encodeURIComponent(q);
+
+    try {
+        const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        renderResults(data);
+    } catch (err) {
+        console.error('Błąd wyszukiwania:', err);
+        setResultsState('Błąd wyszukiwania. Spróbuj ponownie.');
+    }
+}
+
+function renderResults(items) {
+    elSearchResults.innerHTML = '';
+    if (!items || items.length === 0) {
+        setResultsState('Brak wyników.');
+        return;
+    }
+    items.forEach((item) => {
+        const li = document.createElement('li');
+        li.textContent = item.display_name;
+        li.addEventListener('click', () => selectResult(item));
+        elSearchResults.appendChild(li);
+    });
+}
+
+function selectResult(item) {
+    elSearchResults.innerHTML = '';
+    elSearchInput.value = item.display_name.split(',')[0];
+    const lat = parseFloat(item.lat);
+    const lng = parseFloat(item.lon);
+    // Stały zoom miasteczka — przewidywalny widok; autor doprecyzuje przyciskami +/-.
+    map.flyTo([lat, lng], TOWN_ZOOM, { duration: 1.2 });
+    // writeLocationToUrl() odpali się na zdarzeniu moveend/zoomend.
+}
+
+function copyEmbedCode() {
+    const c = map.getCenter();
+    const params = new URLSearchParams();
+    params.set('lat', c.lat.toFixed(5));
+    params.set('lng', c.lng.toFixed(5));
+    params.set('zoom', formatZoom(map.getZoom()));
+    // Świadomie NIE dodajemy edit=1 — embed ma być "czysty".
+
+    const src = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    const snippet =
+        `<iframe src="${src}" width="100%" height="600" style="border:0" `
+        + `allowfullscreen title="Ukraina – linia frontu"></iframe>`;
+
+    navigator.clipboard.writeText(snippet)
+        .then(() => showCopyStatus('Skopiowano!'))
+        .catch(() => {
+            // Awaryjnie (brak secure context): pokaż kod do ręcznego skopiowania.
+            elSearchInput.value = snippet;
+            elSearchInput.select();
+            showCopyStatus('Skopiuj ręcznie (Ctrl+C)');
+        });
+}
+
+function showCopyStatus(msg) {
+    elCopyStatus.textContent = msg;
+    clearTimeout(copyStatusTimeout);
+    copyStatusTimeout = setTimeout(() => { elCopyStatus.textContent = ''; }, 2500);
 }
 
 async function fetchFrameList() {

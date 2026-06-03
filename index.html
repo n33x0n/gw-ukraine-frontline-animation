@@ -8,7 +8,7 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=8">
+    <link rel="stylesheet" href="style.css?v=9">
 </head>
 
 <body>
@@ -23,6 +23,17 @@
 
     <div id="map"></div>
     <div id="inset-map"></div>
+
+    <!-- Wyszukiwarka miejscowości + generator embed (widoczne tylko w trybie edycji ?edit=1) -->
+    <div id="search-panel" hidden>
+        <div id="search-box">
+            <input type="text" id="search-input" placeholder="Szukaj miejscowości…" autocomplete="off"
+                spellcheck="false">
+            <ul id="search-results"></ul>
+        </div>
+        <button id="btn-copy-embed" type="button">Kopiuj kod embed</button>
+        <span id="copy-status" aria-live="polite"></span>
+    </div>
 
     <div id="controls">
         <button id="btn-play" class="btn-icon">▶ Odtwórz</button>
@@ -44,7 +55,7 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 
-    <script src="script.js?v=10"></script>
+    <script src="script.js?v=11"></script>
 </body>
 
 </html>

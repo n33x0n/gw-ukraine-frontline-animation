@@ -247,3 +247,117 @@ button:disabled {
         bottom: 0 !important;
     }
 }
+
+/* Wyszukiwarka + generator embed (tryb edycji ?edit=1) */
+#search-panel {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1100;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    width: 280px;
+    background: rgba(20, 20, 20, 0.95);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+#search-panel.edit-visible {
+    display: flex;
+}
+
+#search-box {
+    position: relative;
+}
+
+#search-input {
+    width: 100%;
+    box-sizing: border-box;
+    background: #141414;
+    color: #fff;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: 'Montserrat', sans-serif;
+    outline: none;
+}
+
+#search-input:focus {
+    border-color: #dc1a21;
+}
+
+#search-input::placeholder {
+    color: #888;
+}
+
+#search-results {
+    list-style: none;
+    margin: 4px 0 0 0;
+    padding: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    background: #141414;
+    border: 1px solid #333;
+    border-radius: 4px;
+}
+
+#search-results:empty {
+    display: none;
+}
+
+#search-results li {
+    padding: 8px 10px;
+    font-size: 12px;
+    line-height: 1.3;
+    color: #ddd;
+    cursor: pointer;
+    border-bottom: 1px solid #222;
+}
+
+#search-results li:last-child {
+    border-bottom: none;
+}
+
+#search-results li:hover,
+#search-results li.active {
+    background: #dc1a21;
+    color: #fff;
+}
+
+#search-results li.state {
+    cursor: default;
+    color: #888;
+    font-style: italic;
+}
+
+#search-results li.state:hover {
+    background: #141414;
+    color: #888;
+}
+
+#btn-copy-embed {
+    width: 100%;
+}
+
+#copy-status {
+    font-size: 11px;
+    color: #ff5555;
+    min-height: 14px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* W trybie edycji na mobile panel niżej, by nie nachodził na mapę poglądową */
+@media (max-width: 768px) {
+    #search-panel {
+        top: 95px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+    }
+}
